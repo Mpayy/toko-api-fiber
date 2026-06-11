@@ -11,4 +11,5 @@ type ProductUseCase interface {
 	Delete(ctx context.Context, id int64) error
 	GetAll(ctx context.Context) ([]*model.ProductResponse, error)
 	GetByID(ctx context.Context, id int64) (*model.ProductResponse, error)
+	Patch(ctx context.Context, request *model.PatchProductRequest) (*model.ProductResponse, error)
 }

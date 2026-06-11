@@ -19,14 +19,14 @@ import (
 
 func InitializedApp() *config.App {
 	viper := config.NewViper()
-	app := config.NewFiber(viper)
 	logger := config.NewLogrus(viper)
+	app := config.NewFiber(viper, logger)
 	db := config.NewGorm(viper, logger)
 	validate := config.NewValidator(viper)
 	productRepository := repository.NewProductRepository(db, logger)
 	productUseCase := usecase.NewProductUseCase(db, logger, validate, productRepository)
 	productController := http.NewProductController(productUseCase, logger)
-	authMiddleware := middleware.NewAuthMiddleware(logger)
+	authMiddleware := middleware.NewAuthMiddleware(logger, viper)
 	configApp := config.NewApp(app, productController, authMiddleware, logger, validate, viper, db)
 	return configApp
 }

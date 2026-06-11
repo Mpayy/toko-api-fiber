@@ -24,7 +24,7 @@ func (m *AuthMiddleware) Handle(ctx fiber.Ctx) error {
 	m.Log.WithFields(logrus.Fields{
 		"method": ctx.Method(),
 		"path":   ctx.Path(),
-	}).Info("Request Recieved")
+	}).Info("Request Received")
 
 	expectedKey := m.Config.GetString("APP_API_KEY")
 	apiKey := ctx.Get("X-Api-Key")
@@ -38,9 +38,5 @@ func (m *AuthMiddleware) Handle(ctx fiber.Ctx) error {
 		"key":    apiKey,
 	}).Error("Unauthorized")
 
-	return ctx.Status(fiber.StatusUnauthorized).JSON(model.WebResponse{
-		Code:   401,
-		Status: "Unauthorized",
-		Data:   nil,
-	})
+	return model.ErrUnauthorized
 }

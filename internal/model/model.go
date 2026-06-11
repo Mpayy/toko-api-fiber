@@ -1,7 +1,8 @@
 package model
 
-type WebResponse struct {
+type WebResponse[T any] struct {
 	Code   int    `json:"code"`
 	Status string `json:"status"`
-	Data   any    `json:"data"`
+	Data   T      `json:"data,omitempty"`
+	Errors string `json:"errors,omitempty"`
 }

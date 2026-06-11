@@ -17,4 +17,5 @@ func NewRouter(app *fiber.App, productController http.ProductController, authMid
 	api.Delete("/products/:id", productController.Delete)
 	api.Get("/products", productController.GetAll)
 	api.Get("/products/:id", productController.GetByID)
+	api.Patch("/products/:id", productController.Patch)
 }

@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"strconv"
 	"toko-api-fiber/internal/model"
 	"toko-api-fiber/internal/usecase"
@@ -27,25 +28,17 @@ func (c *ProductControllerImpl) Create(ctx fiber.Ctx) error {
 	err := ctx.Bind().JSON(request)
 	if err != nil {
 		c.Log.WithError(err).Error("Failed to parse request")
-		return ctx.Status(fiber.ErrBadRequest.Code).JSON(model.WebResponse{
-			Code:   fiber.ErrBadRequest.Code,
-			Status: fiber.ErrBadRequest.Message,
-			Data:   err.Error(),
-		})
+		return fmt.Errorf("%w: %s", fiber.ErrBadRequest, err)
 	}
 
 	response, err := c.ProductUseCase.Create(ctx.Context(), request)
 	if err != nil {
 		c.Log.WithError(err).Error("Failed to create product")
-		return ctx.Status(fiber.ErrBadRequest.Code).JSON(model.WebResponse{
-			Code:   fiber.ErrBadRequest.Code,
-			Status: fiber.ErrBadRequest.Message,
-			Data:   err.Error(),
-		})
+		return err
 	}
 
-	return ctx.JSON(model.WebResponse{
-		Code:   200,
+	return ctx.Status(fiber.StatusOK).JSON(model.WebResponse[*model.ProductResponse]{
+		Code:   fiber.StatusOK,
 		Status: "OK",
 		Data:   response,
 	})
@@ -57,22 +50,14 @@ func (c *ProductControllerImpl) Update(ctx fiber.Ctx) error {
 	err := ctx.Bind().JSON(request)
 	if err != nil {
 		c.Log.WithError(err).Error("Failed to parse request")
-		return ctx.Status(fiber.ErrBadRequest.Code).JSON(model.WebResponse{
-			Code:   fiber.ErrBadRequest.Code,
-			Status: fiber.ErrBadRequest.Message,
-			Data:   err.Error(),
-		})
+		return fmt.Errorf("%w: %s", fiber.ErrBadRequest, err)
 	}
 
 	idParam := ctx.Params("id")
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
 		c.Log.WithError(err).Error("Failed to parse ID")
-		return ctx.Status(fiber.ErrBadRequest.Code).JSON(model.WebResponse{
-			Code:   fiber.ErrBadRequest.Code,
-			Status: fiber.ErrBadRequest.Message,
-			Data:   err.Error(),
-		})
+		return fmt.Errorf("%w: %s", fiber.ErrBadRequest, err)
 	}
 
 	request.ID = int64(id)
@@ -80,15 +65,11 @@ func (c *ProductControllerImpl) Update(ctx fiber.Ctx) error {
 	response, err := c.ProductUseCase.Update(ctx.Context(), request)
 	if err != nil {
 		c.Log.WithError(err).Error("Failed to update product")
-		return ctx.Status(fiber.ErrBadRequest.Code).JSON(model.WebResponse{
-			Code:   fiber.ErrBadRequest.Code,
-			Status: fiber.ErrBadRequest.Message,
-			Data:   err.Error(),
-		})
+		return err
 	}
 
-	return ctx.JSON(model.WebResponse{
-		Code:   200,
+	return ctx.Status(fiber.StatusOK).JSON(model.WebResponse[*model.ProductResponse]{
+		Code:   fiber.StatusOK,
 		Status: "OK",
 		Data:   response,
 	})
@@ -99,27 +80,18 @@ func (c *ProductControllerImpl) Delete(ctx fiber.Ctx) error {
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
 		c.Log.WithError(err).Error("Failed to parse ID")
-		return ctx.Status(fiber.ErrBadRequest.Code).JSON(model.WebResponse{
-			Code:   fiber.ErrBadRequest.Code,
-			Status: fiber.ErrBadRequest.Message,
-			Data:   err.Error(),
-		})
+		return fmt.Errorf("%w: %s", fiber.ErrBadRequest, err)
 	}
 
 	err = c.ProductUseCase.Delete(ctx.Context(), int64(id))
 	if err != nil {
 		c.Log.WithError(err).Error("Failed to delete product")
-		return ctx.Status(fiber.ErrBadRequest.Code).JSON(model.WebResponse{
-			Code:   fiber.ErrBadRequest.Code,
-			Status: fiber.ErrBadRequest.Message,
-			Data:   err.Error(),
-		})
+		return err
 	}
 
-	return ctx.JSON(model.WebResponse{
-		Code:   200,
+	return ctx.Status(fiber.StatusOK).JSON(model.WebResponse[*model.ProductResponse]{
+		Code:   fiber.StatusOK,
 		Status: "OK",
-		Data:   nil,
 	})
 }
 
@@ -127,15 +99,11 @@ func (c *ProductControllerImpl) GetAll(ctx fiber.Ctx) error {
 	response, err := c.ProductUseCase.GetAll(ctx.Context())
 	if err != nil {
 		c.Log.WithError(err).Error("Failed to get all products")
-		return ctx.Status(fiber.ErrInternalServerError.Code).JSON(model.WebResponse{
-			Code:   fiber.ErrInternalServerError.Code,
-			Status: fiber.ErrInternalServerError.Message,
-			Data:   err.Error(),
-		})
+		return err
 	}
 
-	return ctx.JSON(model.WebResponse{
-		Code:   200,
+	return ctx.Status(fiber.StatusOK).JSON(model.WebResponse[[]*model.ProductResponse]{
+		Code:   fiber.StatusOK,
 		Status: "OK",
 		Data:   response,
 	})
@@ -146,25 +114,48 @@ func (c *ProductControllerImpl) GetByID(ctx fiber.Ctx) error {
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
 		c.Log.WithError(err).Error("Failed to parse ID")
-		return ctx.Status(fiber.ErrBadRequest.Code).JSON(model.WebResponse{
-			Code:   fiber.ErrBadRequest.Code,
-			Status: fiber.ErrBadRequest.Message,
-			Data:   err.Error(),
-		})
+		return fmt.Errorf("%w: %s", fiber.ErrBadRequest, err)
 	}
 
 	response, err := c.ProductUseCase.GetByID(ctx.Context(), int64(id))
 	if err != nil {
 		c.Log.WithError(err).Error("Failed to get product by ID")
-		return ctx.Status(fiber.ErrInternalServerError.Code).JSON(model.WebResponse{
-			Code:   fiber.ErrInternalServerError.Code,
-			Status: fiber.ErrInternalServerError.Message,
-			Data:   err.Error(),
-		})
+		return err
 	}
 
-	return ctx.JSON(model.WebResponse{
-		Code:   200,
+	return ctx.Status(fiber.StatusOK).JSON(model.WebResponse[*model.ProductResponse]{
+		Code:   fiber.StatusOK,
+		Status: "OK",
+		Data:   response,
+	})
+}
+
+func (c *ProductControllerImpl) Patch(ctx fiber.Ctx) error {
+	request := new(model.PatchProductRequest)
+
+	err := ctx.Bind().JSON(request)
+	if err != nil {
+		c.Log.WithError(err).Error("Failed to parse request")
+		return fmt.Errorf("%w: %s", fiber.ErrBadRequest, err)
+	}
+
+	idParam := ctx.Params("id")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		c.Log.WithError(err).Error("Failed to parse ID")
+		return fmt.Errorf("%w: %s", fiber.ErrBadRequest, err)
+	}
+
+	request.ID = int64(id)
+
+	response, err := c.ProductUseCase.Patch(ctx.Context(), request)
+	if err != nil {
+		c.Log.WithError(err).Error("Failed to patch product")
+		return err
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(model.WebResponse[*model.ProductResponse]{
+		Code:   fiber.StatusOK,
 		Status: "OK",
 		Data:   response,
 	})

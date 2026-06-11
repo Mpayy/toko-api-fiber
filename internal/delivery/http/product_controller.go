@@ -8,4 +8,5 @@ type ProductController interface {
 	Delete(ctx fiber.Ctx) error
 	GetAll(ctx fiber.Ctx) error
 	GetByID(ctx fiber.Ctx) error
+	Patch(ctx fiber.Ctx) error
 }
