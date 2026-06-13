@@ -21,22 +21,31 @@ func NewAuthMiddleware(log *logrus.Logger, config *viper.Viper) *AuthMiddleware 
 }
 
 func (m *AuthMiddleware) Handle(ctx fiber.Ctx) error {
+	method := ctx.Method()
+	path := ctx.Path()
+	ip := ctx.IP()
+
 	m.Log.WithFields(logrus.Fields{
-		"method": ctx.Method(),
-		"path":   ctx.Path(),
+		"ip":     ip,
+		"method": method,
+		"path":   path,
 	}).Info("Request Received")
 
 	expectedKey := m.Config.GetString("APP_API_KEY")
 	apiKey := ctx.Get("X-Api-Key")
-	if apiKey == expectedKey {
-		return ctx.Next()
+	if apiKey != expectedKey {
+		m.Log.WithFields(logrus.Fields{
+			"method": method,
+			"path":   path,
+			"key":    apiKey,
+		}).Error("Unauthorized")
+
+		return &model.UnauthorizedError{
+			Message: fiber.ErrUnauthorized.Message,
+		}
 	}
 
-	m.Log.WithFields(logrus.Fields{
-		"method": ctx.Method(),
-		"path":   ctx.Path(),
-		"key":    apiKey,
-	}).Error("Unauthorized")
+	err := ctx.Next()
 
-	return model.ErrUnauthorized
+	return err
 }

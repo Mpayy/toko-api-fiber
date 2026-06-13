@@ -19,40 +19,31 @@ func NewFiber(config *viper.Viper, log *logrus.Logger) *fiber.App {
 
 func NewErrorHandler(log *logrus.Logger) fiber.ErrorHandler {
 	return func(ctx fiber.Ctx, err error) error {
-		// code := fiber.StatusInternalServerError
-
-		// if e, ok := err.(*fiber.Error); ok {
-		// 	code = e.Code
-		// }
-
-		// return ctx.Status(code).JSON(fiber.Map{
-		// 	"errors": err.Error(),
-		// })
-
-		log.WithError(err).Error("An error occurred")
-
 		code := fiber.StatusInternalServerError
 		message := "Internal Server Error"
+		var errorMessage any = "INTERNAL SERVER ERROR"
 
+		var clientError model.ClientError
 		var fiberError *fiber.Error
-		if errors.As(err, &fiberError) {
+
+		if errors.As(err, &clientError) {
+			code = clientError.Code()
+			message = clientError.Error()
+			errorMessage = clientError.GetError()
+		} else if errors.As(err, &fiberError) {
 			code = fiberError.Code
 			message = fiberError.Message
-		} else if errors.Is(err, model.ErrNotFound) {
-			code = fiber.StatusNotFound
-			message = "Not Found"
-		} else if errors.Is(err, model.ErrUnauthorized) {
-			code = fiber.StatusUnauthorized
-			message = "Unauthorized"
-		} else if errors.Is(err, model.ErrValidation) {
-			code = fiber.StatusBadRequest
-			message = "Bad Request"
+			errorMessage = fiberError.Error()
+		}
+
+		if code >= 500 {
+			log.Error(err)
 		}
 
 		return ctx.Status(code).JSON(model.WebResponse[any]{
 			Code:   code,
 			Status: message,
-			Errors: err.Error(),
+			Errors: errorMessage,
 		})
 	}
 }
