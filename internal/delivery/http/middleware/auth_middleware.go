@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"toko-api-fiber/internal/model"
+	"toko-api-fiber/internal/exception"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/sirupsen/logrus"
@@ -40,7 +40,7 @@ func (m *AuthMiddleware) Handle(ctx fiber.Ctx) error {
 			"key":    apiKey,
 		}).Error("Unauthorized")
 
-		return &model.UnauthorizedError{
+		return &exception.UnauthorizedError{
 			Message: fiber.ErrUnauthorized.Message,
 		}
 	}

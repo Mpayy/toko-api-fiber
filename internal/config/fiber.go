@@ -2,6 +2,7 @@ package config
 
 import (
 	"errors"
+	"toko-api-fiber/internal/exception"
 	"toko-api-fiber/internal/model"
 
 	"github.com/gofiber/fiber/v3"
@@ -23,7 +24,7 @@ func NewErrorHandler(log *logrus.Logger) fiber.ErrorHandler {
 		message := "Internal Server Error"
 		var errorMessage any = "INTERNAL SERVER ERROR"
 
-		var clientError model.ClientError
+		var clientError exception.ClientError
 		var fiberError *fiber.Error
 
 		if errors.As(err, &clientError) {

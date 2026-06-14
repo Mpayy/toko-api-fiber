@@ -13,7 +13,6 @@ import (
 	"toko-api-fiber/internal/delivery/http/middleware"
 	"toko-api-fiber/internal/repository"
 	"toko-api-fiber/internal/usecase"
-	"toko-api-fiber/internal/util"
 )
 
 // Injectors from injector.go:
@@ -23,7 +22,7 @@ func InitializedApp() *config.App {
 	logger := config.NewLogrus(viper)
 	app := config.NewFiber(viper, logger)
 	db := config.NewGorm(viper, logger)
-	transaction := util.NewTransaction(db)
+	transaction := repository.NewTransaction(db)
 	productRepository := repository.NewProductRepository(db, logger)
 	productUseCase := usecase.NewProductUseCase(transaction, logger, productRepository)
 	validate := config.NewValidator(viper)

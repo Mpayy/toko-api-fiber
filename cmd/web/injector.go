@@ -9,7 +9,6 @@ import (
 	"toko-api-fiber/internal/delivery/http/middleware"
 	"toko-api-fiber/internal/repository"
 	"toko-api-fiber/internal/usecase"
-	"toko-api-fiber/internal/util"
 
 	"github.com/google/wire"
 )
@@ -27,7 +26,7 @@ func InitializedApp() *config.App {
 		config.NewGorm,
 		config.NewValidator,
 		config.NewFiber,
-		util.NewTransaction,
+		repository.NewTransaction,
 		productSet,
 		middleware.NewAuthMiddleware,
 		config.NewApp,

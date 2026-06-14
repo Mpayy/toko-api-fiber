@@ -3,6 +3,7 @@ package http
 import (
 	"fmt"
 	"strconv"
+	"toko-api-fiber/internal/exception"
 	"toko-api-fiber/internal/model"
 	"toko-api-fiber/internal/usecase"
 
@@ -36,11 +37,11 @@ func (c *ProductControllerImpl) Create(ctx fiber.Ctx) error {
 
 	err = c.Validate.Struct(request)
 	if err != nil {
-		fieldErrors := model.ExtractValidationErrors(err)
+		fieldErrors := exception.ExtractValidationErrors(err)
 		c.Log.WithFields(logrus.Fields{
 			"errors": fieldErrors,
 		}).Warn("Validation failed for create product")
-		return &model.ValidationErrorWithFields{
+		return &exception.ValidationErrorWithFields{
 			Message: fiber.ErrBadRequest.Message,
 			Errors:  fieldErrors,
 		}
@@ -78,11 +79,11 @@ func (c *ProductControllerImpl) Update(ctx fiber.Ctx) error {
 
 	err = c.Validate.Struct(request)
 	if err != nil {
-		fieldErrors := model.ExtractValidationErrors(err)
+		fieldErrors := exception.ExtractValidationErrors(err)
 		c.Log.WithFields(logrus.Fields{
 			"errors": fieldErrors,
 		}).Warn("Validation failed for update product")
-		return &model.ValidationErrorWithFields{
+		return &exception.ValidationErrorWithFields{
 			Message: fiber.ErrBadRequest.Message,
 			Errors:  fieldErrors,
 		}
@@ -172,11 +173,11 @@ func (c *ProductControllerImpl) Patch(ctx fiber.Ctx) error {
 
 	err = c.Validate.Struct(request)
 	if err != nil {
-		fieldErrors := model.ExtractValidationErrors(err)
+		fieldErrors := exception.ExtractValidationErrors(err)
 		c.Log.WithFields(logrus.Fields{
 			"errors": fieldErrors,
 		}).Warn("Validation failed for patch product")
-		return &model.ValidationErrorWithFields{
+		return &exception.ValidationErrorWithFields{
 			Message: fiber.ErrBadRequest.Message,
 			Errors:  fieldErrors,
 		}

@@ -5,8 +5,7 @@ import (
 	"errors"
 	"time"
 	"toko-api-fiber/internal/entity"
-	"toko-api-fiber/internal/model"
-	"toko-api-fiber/internal/util"
+	"toko-api-fiber/internal/exception"
 
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -25,7 +24,7 @@ func NewProductRepository(db *gorm.DB, log *logrus.Logger) ProductRepository {
 }
 
 func (r *ProductRepositoryImpl) GetTx(ctx context.Context) *gorm.DB {
-	if tx, ok := util.GetTxFromContext(ctx); ok {
+	if tx, ok := GetTxFromContext(ctx); ok {
 		return tx
 	}
 	return r.DB
@@ -71,7 +70,7 @@ func (r *ProductRepositoryImpl) GetByID(ctx context.Context, id int64) (*entity.
 
 	if err := r.GetTx(ctx).First(&entity, "id = ?", id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, model.ErrNotFound
+			return nil, exception.ErrNotFound
 		}
 		return nil, err
 	}
