@@ -21,19 +21,16 @@ func NewFiber(config *viper.Viper, log *logrus.Logger) *fiber.App {
 func NewErrorHandler(log *logrus.Logger) fiber.ErrorHandler {
 	return func(ctx fiber.Ctx, err error) error {
 		code := fiber.StatusInternalServerError
-		message := "Internal Server Error"
-		var errorMessage any = "INTERNAL SERVER ERROR"
+		var errorMessage any = "Internal Server Error"
 
 		var clientError exception.ClientError
 		var fiberError *fiber.Error
 
 		if errors.As(err, &clientError) {
 			code = clientError.Code()
-			message = clientError.Error()
 			errorMessage = clientError.GetError()
 		} else if errors.As(err, &fiberError) {
 			code = fiberError.Code
-			message = fiberError.Message
 			errorMessage = fiberError.Error()
 		}
 
@@ -41,10 +38,6 @@ func NewErrorHandler(log *logrus.Logger) fiber.ErrorHandler {
 			log.Error(err)
 		}
 
-		return ctx.Status(code).JSON(model.WebResponse[any]{
-			Code:   code,
-			Status: message,
-			Errors: errorMessage,
-		})
+		return ctx.Status(code).JSON(model.WebResponse[any]{Errors: errorMessage})
 	}
 }

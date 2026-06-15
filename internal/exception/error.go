@@ -2,27 +2,55 @@ package exception
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 )
 
 var (
-	ErrValidation   = errors.New("VALIDATION ERROR")
-	ErrNotFound     = errors.New("NOT FOUND")
-	ErrInternal     = errors.New("INTERNAL ERROR")
-	ErrUnauthorized = errors.New("UNAUTHORIZED")
+	ErrValidation      = errors.New("Validation Error")
+	ErrNotFound        = errors.New("Not Found")
+	ErrDuplicatedEmail = errors.New("Email Already Exist")
+	ErrInternal        = errors.New("Internal Error")
+	ErrUnauthorized    = errors.New("Email or Password Wrong")
 )
 
 func ExtractValidationErrors(err error) map[string]string {
 	errorReport := make(map[string]string)
 
 	if validationErrors, ok := err.(validator.ValidationErrors); ok {
-		for _, fieldError := range validationErrors {
-			errorReport[fieldError.Field()] = fieldError.Tag()
-		}
+		errorReport = TranslateValidationError(validationErrors)
 	}
 
 	return errorReport
+}
+
+func TranslateValidationError(valErr validator.ValidationErrors) map[string]string {
+	fieldError := make(map[string]string)
+	for _, e := range valErr {
+		var message string
+		switch e.Tag() {
+		case "required":
+			message = "must be filled"
+		case "email":
+			message = "must be a valid email"
+		case "min":
+			message = "must be at least " + e.Param() + " characters long"
+		case "max":
+			message = "must be at most " + e.Param() + " characters long"
+		case "numeric":
+			message = "must be a number"
+		case "gt":
+			message = "must be greater than " + e.Param()
+		case "valid_price":
+			message = "price must be multiples of 100"
+		default:
+			message = "invalid input value"
+		}
+		fieldError[strings.ToLower(e.Field())] = message
+	}
+
+	return fieldError
 }
 
 type ClientError interface {
@@ -31,7 +59,7 @@ type ClientError interface {
 	GetError() any
 }
 
-//Error Validation
+// Error Validation
 type ValidationErrorWithFields struct {
 	Message string
 	Errors  map[string]string
@@ -42,63 +70,19 @@ func (e *ValidationErrorWithFields) Code() int {
 }
 
 func (e *ValidationErrorWithFields) Error() string {
-	return e.Message
+	return ErrValidation.Error()
 }
 
 func (e *ValidationErrorWithFields) GetError() any {
 	return e.Errors
 }
 
+func ValidPrice(field validator.FieldLevel) bool {
+	value := field.Field().Int()
 
-//Error Not Found
-type NotFoundError struct {
-	Message string
-}
+	if value%100 == 0 {
+		return true
+	}
 
-func (e *NotFoundError) Code() int {
-	return 404
-}
-
-func (e *NotFoundError) Error() string {
-	return e.Message
-}
-
-func (e *NotFoundError) GetError() any {
-	return nil
-}
-
-
-//Error Unauthorized
-type UnauthorizedError struct {
-	Message string
-}
-
-func (e *UnauthorizedError) Code() int {
-	return 401
-}
-
-func (e *UnauthorizedError) Error() string {
-	return e.Message
-}
-
-func (e *UnauthorizedError) GetError() any {
-	return nil
-}
-
-
-// Error Internal
-type InternalError struct {
-	Message string
-}
-
-func (e *InternalError) Code() int {
-	return 500
-}
-
-func (e *InternalError) Error() string {
-	return e.Message
-}
-
-func (e *InternalError) GetError() any {
-	return nil
+	return false
 }

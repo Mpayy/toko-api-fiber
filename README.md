@@ -36,7 +36,7 @@ cp config.env.example config.env
 ### 3. Jalankan migration
 ```bash
 migrate -path db/migrations \
-        -database "mysql://user:password@tcp(localhost:3306)/toko_fiber" up
+        -database "mysql://root:password@tcp(localhost:3306)/toko-api-fiber" up
 ```
 
 ### 4. Jalankan aplikasi

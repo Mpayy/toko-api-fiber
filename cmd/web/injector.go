@@ -9,6 +9,7 @@ import (
 	"toko-api-fiber/internal/delivery/http/middleware"
 	"toko-api-fiber/internal/repository"
 	"toko-api-fiber/internal/usecase"
+	"toko-api-fiber/internal/util"
 
 	"github.com/google/wire"
 )
@@ -17,6 +18,12 @@ var productSet = wire.NewSet(
 	repository.NewProductRepository,
 	usecase.NewProductUseCase,
 	http.NewProductController,
+)
+
+var userSet = wire.NewSet(
+	repository.NewUserRepository,
+	usecase.NewUserUsecase,
+	http.NewUserController,
 )
 
 func InitializedApp() *config.App {
@@ -28,7 +35,9 @@ func InitializedApp() *config.App {
 		config.NewFiber,
 		repository.NewTransaction,
 		productSet,
+		userSet,
 		middleware.NewAuthMiddleware,
+		util.NewTokenUtil,
 		config.NewApp,
 	)
 

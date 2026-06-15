@@ -31,20 +31,12 @@ func (u *ProductUseCaseImpl) Create(ctx context.Context, request *model.CreatePr
 	product := &entity.Product{
 		Name:  request.Name,
 		Price: request.Price,
-		Stock: request.Stock,
+		Stock: *request.Stock,
 	}
 
-	err := u.Transaction.WithTransaction(ctx, func(txCtx context.Context) error {
-		if err := u.ProductRepository.Create(txCtx, product); err != nil {
-			u.Log.WithError(err).Error("Failed to create product")
-			return exception.ErrInternal
-		}
-
-		return nil
-	})
-
+	err := u.ProductRepository.Create(ctx, product)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create product: %w", err)
 	}
 
 	return converter.ToProductResponse(product), nil
@@ -53,31 +45,18 @@ func (u *ProductUseCaseImpl) Create(ctx context.Context, request *model.CreatePr
 func (u *ProductUseCaseImpl) Update(ctx context.Context, request *model.UpdateProductRequest) (*model.ProductResponse, error) {
 	product, err := u.ProductRepository.GetByID(ctx, request.ID)
 	if err != nil {
-		u.Log.WithFields(logrus.Fields{
-			"product_id": request.ID,
-			"error":      err,
-		}).Warn("Product not found")
 		if errors.Is(err, exception.ErrNotFound) {
-			return nil, &exception.NotFoundError{
-				Message: fmt.Sprintf("Product with id = %d not found", request.ID),
-			}
+			return nil, exception.ErrNotFound
 		}
-		return nil, exception.ErrInternal
+		return nil, fmt.Errorf("failed to find product by id: %w", err)
 	}
 
-	err = u.Transaction.WithTransaction(ctx, func(txCtx context.Context) error {
-		product.Name = request.Name
-		product.Price = request.Price
-		product.Stock = request.Stock
-		if err := u.ProductRepository.Update(txCtx, product); err != nil {
-			u.Log.WithError(err).Error("Failed to update product")
-			return exception.ErrInternal
-		}
-		return nil
-	})
-
+	product.Name = request.Name
+	product.Price = request.Price
+	product.Stock = *request.Stock
+	err = u.ProductRepository.Update(ctx, product)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to update product: %w", err)
 	}
 
 	return converter.ToProductResponse(product), nil
@@ -86,28 +65,15 @@ func (u *ProductUseCaseImpl) Update(ctx context.Context, request *model.UpdatePr
 func (u *ProductUseCaseImpl) Delete(ctx context.Context, id int64) error {
 	product, err := u.ProductRepository.GetByID(ctx, id)
 	if err != nil {
-		u.Log.WithFields(logrus.Fields{
-			"product_id": id,
-			"error":      err,
-		}).Warn("Product not found")
 		if errors.Is(err, exception.ErrNotFound) {
-			return &exception.NotFoundError{
-				Message: fmt.Sprintf("Product with id = %d not found", id),
-			}
+			return exception.ErrNotFound
 		}
-		return exception.ErrInternal
+		return fmt.Errorf("failed to find product by id: %w", err)
 	}
 
-	err = u.Transaction.WithTransaction(ctx, func(txCtx context.Context) error {
-		if err := u.ProductRepository.Delete(txCtx, product); err != nil {
-			u.Log.WithError(err).Error("Failed to delete product")
-			return exception.ErrInternal
-		}
-		return nil
-	})
-
+	err = u.ProductRepository.Delete(ctx, product)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to delete product: %w", err)
 	}
 
 	return nil
@@ -116,8 +82,7 @@ func (u *ProductUseCaseImpl) Delete(ctx context.Context, id int64) error {
 func (u *ProductUseCaseImpl) GetAll(ctx context.Context) ([]*model.ProductResponse, error) {
 	products, err := u.ProductRepository.GetAll(ctx)
 	if err != nil {
-		u.Log.WithError(err).Error("Failed to get all products")
-		return nil, exception.ErrInternal
+		return nil, fmt.Errorf("failed to get all products: %w", err)
 	}
 
 	return converter.ToProductResponses(products), nil
@@ -126,16 +91,10 @@ func (u *ProductUseCaseImpl) GetAll(ctx context.Context) ([]*model.ProductRespon
 func (u *ProductUseCaseImpl) GetByID(ctx context.Context, id int64) (*model.ProductResponse, error) {
 	product, err := u.ProductRepository.GetByID(ctx, id)
 	if err != nil {
-		u.Log.WithFields(logrus.Fields{
-			"product_id": id,
-			"error":      err,
-		}).Warn("Product not found")
 		if errors.Is(err, exception.ErrNotFound) {
-			return nil, &exception.NotFoundError{
-				Message: fmt.Sprintf("Product with id = %d not found", id),
-			}
+			return nil, exception.ErrNotFound
 		}
-		return nil, exception.ErrInternal
+		return nil, fmt.Errorf("failed to find product by id: %w", err)
 	}
 
 	return converter.ToProductResponse(product), nil
@@ -144,16 +103,10 @@ func (u *ProductUseCaseImpl) GetByID(ctx context.Context, id int64) (*model.Prod
 func (u *ProductUseCaseImpl) Patch(ctx context.Context, request *model.PatchProductRequest) (*model.ProductResponse, error) {
 	product, err := u.ProductRepository.GetByID(ctx, request.ID)
 	if err != nil {
-		u.Log.WithFields(logrus.Fields{
-			"product_id": request.ID,
-			"error":      err,
-		}).Warn("Product not found")
 		if errors.Is(err, exception.ErrNotFound) {
-			return nil, &exception.NotFoundError{
-				Message: fmt.Sprintf("Product with id = %d not found", request.ID),
-			}
+			return nil, exception.ErrNotFound
 		}
-		return nil, exception.ErrInternal
+		return nil, fmt.Errorf("failed to find product by id: %w", err)
 	}
 
 	fields := make(map[string]any)
@@ -167,16 +120,8 @@ func (u *ProductUseCaseImpl) Patch(ctx context.Context, request *model.PatchProd
 		fields["stock"] = *request.Stock
 	}
 
-	err = u.Transaction.WithTransaction(ctx, func(txCtx context.Context) error {
-		if err := u.ProductRepository.Patch(txCtx, product, fields); err != nil {
-			u.Log.WithError(err).Error("Failed to patch product")
-			return exception.ErrInternal
-		}
-		return nil
-	})
-
-	if err != nil {
-		return nil, err
+	if err := u.ProductRepository.Patch(ctx, product, fields); err != nil {
+		return nil, fmt.Errorf("failed to patch product: %w", err)
 	}
 
 	return converter.ToProductResponse(product), nil

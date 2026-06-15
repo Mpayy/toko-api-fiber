@@ -1,7 +1,7 @@
 package http
 
 import (
-	"fmt"
+	"errors"
 	"strconv"
 	"toko-api-fiber/internal/exception"
 	"toko-api-fiber/internal/model"
@@ -32,7 +32,7 @@ func (c *ProductControllerImpl) Create(ctx fiber.Ctx) error {
 	err := ctx.Bind().JSON(request)
 	if err != nil {
 		c.Log.WithError(err).Warn("Failed to parse request")
-		return fmt.Errorf("%w: %s", fiber.ErrBadRequest, err)
+		return fiber.ErrBadRequest
 	}
 
 	err = c.Validate.Struct(request)
@@ -42,8 +42,7 @@ func (c *ProductControllerImpl) Create(ctx fiber.Ctx) error {
 			"errors": fieldErrors,
 		}).Warn("Validation failed for create product")
 		return &exception.ValidationErrorWithFields{
-			Message: fiber.ErrBadRequest.Message,
-			Errors:  fieldErrors,
+			Errors: fieldErrors,
 		}
 	}
 
@@ -52,11 +51,7 @@ func (c *ProductControllerImpl) Create(ctx fiber.Ctx) error {
 		return err
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(model.WebResponse[*model.ProductResponse]{
-		Code:   fiber.StatusOK,
-		Status: "OK",
-		Data:   response,
-	})
+	return ctx.JSON(model.WebResponse[*model.ProductResponse]{Data: response})
 }
 
 func (c *ProductControllerImpl) Update(ctx fiber.Ctx) error {
@@ -65,14 +60,14 @@ func (c *ProductControllerImpl) Update(ctx fiber.Ctx) error {
 	err := ctx.Bind().JSON(request)
 	if err != nil {
 		c.Log.WithError(err).Warn("Failed to parse request")
-		return fmt.Errorf("%w: %s", fiber.ErrBadRequest, err)
+		return fiber.ErrBadRequest
 	}
 
 	idParam := ctx.Params("id")
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
 		c.Log.WithError(err).Warn("Failed to parse ID")
-		return fmt.Errorf("%w: %s", fiber.ErrBadRequest, err)
+		return fiber.ErrBadRequest
 	}
 
 	request.ID = int64(id)
@@ -84,21 +79,19 @@ func (c *ProductControllerImpl) Update(ctx fiber.Ctx) error {
 			"errors": fieldErrors,
 		}).Warn("Validation failed for update product")
 		return &exception.ValidationErrorWithFields{
-			Message: fiber.ErrBadRequest.Message,
-			Errors:  fieldErrors,
+			Errors: fieldErrors,
 		}
 	}
 
 	response, err := c.ProductUseCase.Update(ctx.Context(), request)
 	if err != nil {
+		if errors.Is(err, exception.ErrNotFound) {
+			return fiber.NewError(fiber.StatusNotFound, err.Error())
+		}
 		return err
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(model.WebResponse[*model.ProductResponse]{
-		Code:   fiber.StatusOK,
-		Status: "OK",
-		Data:   response,
-	})
+	return ctx.Status(fiber.StatusOK).JSON(model.WebResponse[*model.ProductResponse]{Data: response})
 }
 
 func (c *ProductControllerImpl) Delete(ctx fiber.Ctx) error {
@@ -106,18 +99,18 @@ func (c *ProductControllerImpl) Delete(ctx fiber.Ctx) error {
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
 		c.Log.WithError(err).Warn("Failed to parse ID")
-		return fmt.Errorf("%w: %s", fiber.ErrBadRequest, err)
+		return fiber.ErrBadRequest
 	}
 
 	err = c.ProductUseCase.Delete(ctx.Context(), int64(id))
 	if err != nil {
+		if errors.Is(err, exception.ErrNotFound) {
+			return fiber.NewError(fiber.StatusNotFound, err.Error())
+		}
 		return err
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(model.WebResponse[*model.ProductResponse]{
-		Code:   fiber.StatusOK,
-		Status: "OK",
-	})
+	return ctx.Status(fiber.StatusOK).JSON(model.WebResponse[bool]{Data: true})
 }
 
 func (c *ProductControllerImpl) GetAll(ctx fiber.Ctx) error {
@@ -126,11 +119,7 @@ func (c *ProductControllerImpl) GetAll(ctx fiber.Ctx) error {
 		return err
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(model.WebResponse[[]*model.ProductResponse]{
-		Code:   fiber.StatusOK,
-		Status: "OK",
-		Data:   response,
-	})
+	return ctx.Status(fiber.StatusOK).JSON(model.WebResponse[[]*model.ProductResponse]{Data: response})
 }
 
 func (c *ProductControllerImpl) GetByID(ctx fiber.Ctx) error {
@@ -138,19 +127,18 @@ func (c *ProductControllerImpl) GetByID(ctx fiber.Ctx) error {
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
 		c.Log.WithError(err).Warn("Failed to parse ID")
-		return fmt.Errorf("%w: %s", fiber.ErrBadRequest, err)
+		return fiber.ErrBadRequest
 	}
 
 	response, err := c.ProductUseCase.GetByID(ctx.Context(), int64(id))
 	if err != nil {
+		if errors.Is(err, exception.ErrNotFound) {
+			return fiber.NewError(fiber.StatusNotFound, err.Error())
+		}
 		return err
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(model.WebResponse[*model.ProductResponse]{
-		Code:   fiber.StatusOK,
-		Status: "OK",
-		Data:   response,
-	})
+	return ctx.Status(fiber.StatusOK).JSON(model.WebResponse[*model.ProductResponse]{Data: response})
 }
 
 func (c *ProductControllerImpl) Patch(ctx fiber.Ctx) error {
@@ -159,14 +147,14 @@ func (c *ProductControllerImpl) Patch(ctx fiber.Ctx) error {
 	err := ctx.Bind().JSON(request)
 	if err != nil {
 		c.Log.WithError(err).Warn("Failed to parse request")
-		return fmt.Errorf("%w: %s", fiber.ErrBadRequest, err)
+		return fiber.ErrBadRequest
 	}
 
 	idParam := ctx.Params("id")
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
 		c.Log.WithError(err).Warn("Failed to parse ID")
-		return fmt.Errorf("%w: %s", fiber.ErrBadRequest, err)
+		return fiber.ErrBadRequest
 	}
 
 	request.ID = int64(id)
@@ -178,19 +166,17 @@ func (c *ProductControllerImpl) Patch(ctx fiber.Ctx) error {
 			"errors": fieldErrors,
 		}).Warn("Validation failed for patch product")
 		return &exception.ValidationErrorWithFields{
-			Message: fiber.ErrBadRequest.Message,
-			Errors:  fieldErrors,
+			Errors: fieldErrors,
 		}
 	}
 
 	response, err := c.ProductUseCase.Patch(ctx.Context(), request)
 	if err != nil {
+		if errors.Is(err, exception.ErrNotFound) {
+			return fiber.NewError(fiber.StatusNotFound, err.Error())
+		}
 		return err
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(model.WebResponse[*model.ProductResponse]{
-		Code:   fiber.StatusOK,
-		Status: "OK",
-		Data:   response,
-	})
+	return ctx.Status(fiber.StatusOK).JSON(model.WebResponse[*model.ProductResponse]{Data: response})
 }

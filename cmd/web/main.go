@@ -11,6 +11,7 @@ func main() {
 
 	route.NewRouter(
 		app.Fiber,
+		app.UserController,
 		app.ProductController,
 		app.AuthMiddleware,
 	)
