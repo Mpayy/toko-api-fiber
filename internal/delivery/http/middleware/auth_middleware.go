@@ -45,17 +45,13 @@ func (m *AuthMiddleware) Handle(ctx fiber.Ctx) error {
 
 	ctx.Locals("auth", tokenRequest)
 
-	err = ctx.Next()
-
-	m.Log.WithFields(logrus.Fields{
-		"method": ctx.Method(),
-		"path":   ctx.Path(),
-		"status": ctx.Response().StatusCode(),
-	}).Info("HTTP Request Completed")
-
-	return err
+	return ctx.Next()
 }
 
 func GetUser(ctx fiber.Ctx) *model.Auth {
-	return ctx.Locals("auth").(*model.Auth)
+	user, ok := ctx.Locals("auth").(*model.Auth)
+	if !ok {
+		return nil
+	}
+	return user
 }

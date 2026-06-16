@@ -15,12 +15,12 @@ import (
 type ProductControllerImpl struct {
 	Validate       *validator.Validate
 	Log            *logrus.Logger
-	ProductUseCase usecase.ProductUseCase
+	ProductUsecase usecase.ProductUsecase
 }
 
-func NewProductController(productUseCase usecase.ProductUseCase, log *logrus.Logger, validate *validator.Validate) ProductController {
+func NewProductController(productUsecase usecase.ProductUsecase, log *logrus.Logger, validate *validator.Validate) ProductController {
 	return &ProductControllerImpl{
-		ProductUseCase: productUseCase,
+		ProductUsecase: productUsecase,
 		Log:            log,
 		Validate:       validate,
 	}
@@ -46,7 +46,7 @@ func (c *ProductControllerImpl) Create(ctx fiber.Ctx) error {
 		}
 	}
 
-	response, err := c.ProductUseCase.Create(ctx.Context(), request)
+	response, err := c.ProductUsecase.Create(ctx.Context(), request)
 	if err != nil {
 		return err
 	}
@@ -83,7 +83,7 @@ func (c *ProductControllerImpl) Update(ctx fiber.Ctx) error {
 		}
 	}
 
-	response, err := c.ProductUseCase.Update(ctx.Context(), request)
+	response, err := c.ProductUsecase.Update(ctx.Context(), request)
 	if err != nil {
 		if errors.Is(err, exception.ErrNotFound) {
 			return fiber.NewError(fiber.StatusNotFound, err.Error())
@@ -102,7 +102,7 @@ func (c *ProductControllerImpl) Delete(ctx fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	err = c.ProductUseCase.Delete(ctx.Context(), int64(id))
+	err = c.ProductUsecase.Delete(ctx.Context(), int64(id))
 	if err != nil {
 		if errors.Is(err, exception.ErrNotFound) {
 			return fiber.NewError(fiber.StatusNotFound, err.Error())
@@ -114,12 +114,34 @@ func (c *ProductControllerImpl) Delete(ctx fiber.Ctx) error {
 }
 
 func (c *ProductControllerImpl) GetAll(ctx fiber.Ctx) error {
-	response, err := c.ProductUseCase.GetAll(ctx.Context())
+	page := fiber.Query(ctx, "page", 1)
+	size := fiber.Query(ctx, "size", 10)
+
+	if page < 1 {
+		page = 1
+	}
+	if size < 1 {
+		size = 1
+	}
+
+	request := &model.PaginationRequest{
+		Page: &page,
+		Size: &size,
+	}
+
+	response, totalItems, totalPage, err := c.ProductUsecase.GetAll(ctx.Context(), request)
 	if err != nil {
 		return err
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(model.WebResponse[[]*model.ProductResponse]{Data: response})
+	return ctx.Status(fiber.StatusOK).JSON(model.WebResponse[[]*model.ProductResponse]{
+		Data: response,
+		Paging: &model.PaginationResponse{
+			Page:       *request.Page,
+			TotalPages: totalPage,
+			TotalItems: totalItems,
+		},
+	})
 }
 
 func (c *ProductControllerImpl) GetByID(ctx fiber.Ctx) error {
@@ -130,7 +152,7 @@ func (c *ProductControllerImpl) GetByID(ctx fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	response, err := c.ProductUseCase.GetByID(ctx.Context(), int64(id))
+	response, err := c.ProductUsecase.GetByID(ctx.Context(), int64(id))
 	if err != nil {
 		if errors.Is(err, exception.ErrNotFound) {
 			return fiber.NewError(fiber.StatusNotFound, err.Error())
@@ -170,7 +192,7 @@ func (c *ProductControllerImpl) Patch(ctx fiber.Ctx) error {
 		}
 	}
 
-	response, err := c.ProductUseCase.Patch(ctx.Context(), request)
+	response, err := c.ProductUsecase.Patch(ctx.Context(), request)
 	if err != nil {
 		if errors.Is(err, exception.ErrNotFound) {
 			return fiber.NewError(fiber.StatusNotFound, err.Error())

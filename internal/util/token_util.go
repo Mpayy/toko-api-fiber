@@ -49,23 +49,28 @@ func (t *TokenUtilImpl) ParseToken(jwtToken string) (*model.Auth, error) {
 		return nil, err
 	}
 
-	claim := token.Claims.(jwt.MapClaims)
-
-	expFloat := claim["exp"].(float64)
-	exp := int64(expFloat)
-
-	if exp < time.Now().Unix() {
+	claim, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
 		return nil, exception.ErrUnauthorized
 	}
 
-	idFloat := claim["id"].(float64)
-	id := int64(idFloat)
+	id, ok := claim["id"].(float64)
+	if !ok {
+		return nil, exception.ErrUnauthorized
+	}
 
-	username := claim["username"].(string)
-	email := claim["email"].(string)
+	username, ok := claim["username"].(string)
+	if !ok {
+		return nil, exception.ErrUnauthorized
+	}
+
+	email, ok := claim["email"].(string)
+	if !ok {
+		return nil, exception.ErrUnauthorized
+	}
 
 	auth := &model.Auth{
-		ID:       id,
+		ID:       int64(id),
 		Username: username,
 		Email:    email,
 	}

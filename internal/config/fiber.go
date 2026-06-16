@@ -14,6 +14,7 @@ func NewFiber(config *viper.Viper, log *logrus.Logger) *fiber.App {
 	app := fiber.New(fiber.Config{
 		AppName:      config.GetString("APP_NAME"),
 		ErrorHandler: NewErrorHandler(log),
+		
 	})
 	return app
 }

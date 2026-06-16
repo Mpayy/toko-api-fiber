@@ -3,11 +3,11 @@ package model
 import "time"
 
 type UserResponse struct {
-	ID        int64     `json:"id,omitempty"`
-	Username  string    `json:"username,omitempty"`
-	Token     string    `json:"token,omitempty"`
-	CreatedAt time.Time `json:"created_at,omitempty"`
-	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	ID        int64      `json:"id,omitempty"`
+	Username  string     `json:"username,omitempty"`
+	Token     string     `json:"token,omitempty"`
+	CreatedAt *time.Time `json:"created_at,omitempty"`
+	UpdatedAt *time.Time `json:"updated_at,omitempty"`
 }
 
 type VerifyUserRequest struct {

@@ -11,8 +11,8 @@ var (
 	ErrValidation      = errors.New("Validation Error")
 	ErrNotFound        = errors.New("Not Found")
 	ErrDuplicatedEmail = errors.New("Email Already Exist")
-	ErrInternal        = errors.New("Internal Error")
-	ErrUnauthorized    = errors.New("Email or Password Wrong")
+	ErrInternal        = errors.New("Internal Server Error")
+	ErrUnauthorized    = errors.New("Invalid credentials")
 )
 
 func ExtractValidationErrors(err error) map[string]string {

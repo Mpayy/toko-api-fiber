@@ -5,10 +5,14 @@ import (
 	"toko-api-fiber/internal/delivery/http/middleware"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/sirupsen/logrus"
 )
 
-func NewRouter(app *fiber.App, userController http.UserController, productController http.ProductController, authMiddleware *middleware.AuthMiddleware) {
+func NewRouter(app *fiber.App, userController http.UserController, productController http.ProductController, authMiddleware *middleware.AuthMiddleware, log *logrus.Logger) {
     api := app.Group("/api")
+
+    // Logging middleware untuk semua routes
+    api.Use(middleware.NewLoggingMiddleware(log))
 
     api.Post("/users/register", userController.Register)
     api.Post("/users/login", userController.Login)

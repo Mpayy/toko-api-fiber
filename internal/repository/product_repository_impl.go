@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"math"
 	"toko-api-fiber/internal/entity"
 	"toko-api-fiber/internal/exception"
 
@@ -56,27 +57,41 @@ func (r *ProductRepositoryImpl) Delete(ctx context.Context, entity *entity.Produ
 	return nil
 }
 
-func (r *ProductRepositoryImpl) GetAll(ctx context.Context) ([]*entity.Product, error) {
+func (r *ProductRepositoryImpl) GetAll(ctx context.Context, page, size int) ([]*entity.Product, int64, int, error) {
 	var products []*entity.Product
-	err := r.GetTx(ctx).Find(&products).Error
-	if err != nil {
-		return nil, err
+	var totalItems int64
+
+	if err := r.GetTx(ctx).Model(&entity.Product{}).Count(&totalItems).Error; err != nil {
+		return nil, 0, 0, err
 	}
 
-	return products, nil
+	totalPage := int(math.Ceil(float64(totalItems) / float64(size)))
+
+	if totalPage == 0 {
+		totalPage = 1
+	}
+
+	offset := (page - 1) * size
+
+	err := r.GetTx(ctx).Limit(size).Offset(offset).Find(&products).Error
+	if err != nil {
+		return nil, 0, 0, err
+	}
+
+	return products, totalItems, totalPage, nil
 }
 
 func (r *ProductRepositoryImpl) GetByID(ctx context.Context, id int64) (*entity.Product, error) {
-	var entity *entity.Product
+	var product *entity.Product
 
-	if err := r.GetTx(ctx).First(&entity, "id = ?", id).Error; err != nil {
+	if err := r.GetTx(ctx).First(&product, "id = ?", id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, exception.ErrNotFound
 		}
 		return nil, err
 	}
 
-	return entity, nil
+	return product, nil
 }
 
 func (r *ProductRepositoryImpl) Patch(ctx context.Context, entity *entity.Product, fields map[string]any) error {

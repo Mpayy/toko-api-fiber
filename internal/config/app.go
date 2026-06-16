@@ -25,15 +25,15 @@ type App struct {
 }
 
 func NewApp(
-	app               *fiber.App,
+	app *fiber.App,
 	productController http.ProductController,
-	userController    http.UserController,
-	authMiddleware    *middleware.AuthMiddleware,
-	logger            *logrus.Logger,
-	validation        *validator.Validate,
-	config            *viper.Viper,
-	db                *gorm.DB,
-	tokenUtil         util.TokenUtil,
+	userController http.UserController,
+	authMiddleware *middleware.AuthMiddleware,
+	logger *logrus.Logger,
+	validation *validator.Validate,
+	config *viper.Viper,
+	db *gorm.DB,
+	tokenUtil util.TokenUtil,
 ) *App {
 	return &App{
 		Fiber:             app,

@@ -31,7 +31,7 @@ func NewGorm(config *viper.Viper, log *logrus.Logger) *gorm.DB {
 		logger.Config{
 			SlowThreshold:             time.Second,
 			Colorful:                  false,
-			LogLevel:                  logger.Info,
+			LogLevel:                  logger.LogLevel(config.GetInt("LOG_LEVEL")),
 			IgnoreRecordNotFoundError: true,
 			ParameterizedQueries:      true,
 		},

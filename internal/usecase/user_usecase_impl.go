@@ -32,9 +32,7 @@ func NewUserUsecase(transaction repository.Transaction, log *logrus.Logger, user
 }
 
 func (u *UserUsecaseImpl) Verify(ctx context.Context, request *model.VerifyUserRequest) (*model.Auth, error) {
-	user := new(entity.User)
-
-	err := u.UserRepository.FindByToken(ctx, user, request.Token)
+	user, err := u.UserRepository.FindByToken(ctx, request.Token)
 	if err != nil {
 		if errors.Is(err, exception.ErrNotFound) {
 			return nil, exception.ErrNotFound
@@ -73,8 +71,7 @@ func (u *UserUsecaseImpl) Register(ctx context.Context, request *model.RegisterU
 }
 
 func (u *UserUsecaseImpl) Login(ctx context.Context, request *model.LoginUserRequest) (*model.UserResponse, error) {
-	user := &entity.User{}
-	err := u.UserRepository.FindByEmail(ctx, user, request.Email)
+	user, err := u.UserRepository.FindByEmail(ctx, request.Email)
 	if err != nil {
 		if errors.Is(err, exception.ErrNotFound) {
 			return nil, exception.ErrUnauthorized
@@ -106,8 +103,7 @@ func (u *UserUsecaseImpl) Login(ctx context.Context, request *model.LoginUserReq
 }
 
 func (u *UserUsecaseImpl) Current(ctx context.Context, request *model.GetUserRequest) (*model.UserResponse, error) {
-	user := &entity.User{}
-	err := u.UserRepository.FindByID(ctx, user, request.ID)
+	user, err := u.UserRepository.FindByID(ctx, request.ID)
 	if err != nil {
 		if errors.Is(err, exception.ErrNotFound) {
 			return nil, exception.ErrNotFound
@@ -119,8 +115,7 @@ func (u *UserUsecaseImpl) Current(ctx context.Context, request *model.GetUserReq
 }
 
 func (u *UserUsecaseImpl) Logout(ctx context.Context, request *model.LogoutUserRequest) (bool, error) {
-	user := &entity.User{}
-	err := u.UserRepository.FindByID(ctx, user, request.ID)
+	user, err := u.UserRepository.FindByID(ctx, request.ID)
 	if err != nil {
 		if errors.Is(err, exception.ErrNotFound) {
 			return false, exception.ErrNotFound

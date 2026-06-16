@@ -9,8 +9,8 @@ func ToUserResponse(user *entity.User) *model.UserResponse {
 	return &model.UserResponse{
 		ID: user.ID,
 		Username: user.Username,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
+		CreatedAt: &user.CreatedAt,
+		UpdatedAt: &user.UpdatedAt,
 	}
 }
 
