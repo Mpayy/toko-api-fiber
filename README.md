@@ -1,45 +1,68 @@
 # Toko API Fiber
 
-REST API untuk manajemen produk, dibangun dengan Go + Fiber v3 + GORM.
+REST API sederhana untuk manajemen produk dan autentikasi user, dibangun menggunakan Go, Fiber v3, dan GORM dengan implementasi Clean Architecture. Proyek ini dibuat sebagai portofolio untuk mempraktikkan backend development menggunakan ekosistem Go modern.
 
-## Tech Stack
+## 🚀 Fitur Utama
 
-- **Go** 1.26.2
+- **Clean Architecture** (Pemisahan layer Controller, Usecase, dan Repository)
+- **Dependency Injection** menggunakan Google Wire
+- **Autentikasi JWT** (JSON Web Token)
+- **Manajemen User** (Register, Login, Get Current User, Logout)
+- **Manajemen Produk** (CRUD lengkap termasuk Partial Update / PATCH)
+- **Validasi Input** dengan `go-playground/validator` (termasuk custom rule validasi kelipatan harga)
+- **Middleware Terpusat** untuk Logging dan penanganan Error
+
+## 🛠️ Tech Stack
+
+- **Go** 1.26
 - **Fiber v3** — HTTP framework
 - **GORM** — ORM untuk database
 - **MySQL** — Database
 - **Google Wire** — Dependency Injection
+- **golang-jwt** — Authentication
 - **Logrus** — Logging
 - **Viper** — Configuration management
 - **golang-migrate** — Database migration
 - **go-playground/validator** — Request validation
 
-## Cara Setup
+## ⚙️ Cara Setup
 
 ### Prerequisites
-- Go 1.26.2
+
+- Go 1.26+
 - MySQL
 - [golang-migrate CLI](https://github.com/golang-migrate/migrate)
 
 ### 1. Clone repository
+
 ```bash
 git clone https://github.com/Mpayy/toko-api-fiber.git
 cd toko-api-fiber
 ```
 
 ### 2. Setup konfigurasi
+
 ```bash
 cp config.env.example config.env
-# Edit config.env sesuai konfigurasi database kamu
+# Edit config.env sesuai konfigurasi database dan secret key JWT kamu
 ```
 
 ### 3. Jalankan migration
+
 ```bash
-migrate -path db/migrations \
-        -database "mysql://root:password@tcp(localhost:3306)/toko-api-fiber" up
+migrate -path db/migration \
+        -database "mysql://username:password@tcp(localhost:3306)/toko-api-fiber" up
 ```
 
-### 4. Jalankan aplikasi
+### 4. Generate Wire (Optional jika ada perubahan dependency)
+
+```bash
+cd cmd/web/
+wire
+```
+
+### 5. Jalankan aplikasi
+
 ```bash
 cd cmd/web/
 go run .
@@ -47,125 +70,135 @@ go run .
 
 ---
 
-## Endpoints
+## 📡 Endpoints
 
-### Products
+### 👤 Users
 
-| Method | Endpoint | Deskripsi |
-|--------|----------|-----------|
-| GET | `/api/products` | Get semua produk |
-| GET | `/api/products/:id` | Get produk by ID |
-| POST | `/api/products` | Tambah produk baru |
-| PUT | `/api/products/:id` | Update produk |
-| PATCH | `/api/products/:id` | Partial Update produk |
-| DELETE | `/api/products/:id` | Hapus produk |
+| Method | Endpoint              | Deskripsi                               | Auth |
+| ------ | --------------------- | --------------------------------------- | ---- |
+| POST   | `/api/users/register` | Mendaftarkan user baru                  | ❌   |
+| POST   | `/api/users/login`    | Login dan mendapatkan JWT token         | ❌   |
+| GET    | `/api/users/current`  | Mendapatkan data user yang sedang login | ✅   |
+| DELETE | `/api/users/logout`   | Logout (menghapus token)                | ✅   |
 
-> Semua endpoint membutuhkan header `X-API-Key: [nilai API key kamu]`
+### 📦 Products
+
+| Method | Endpoint            | Deskripsi             | Auth |
+| ------ | ------------------- | --------------------- | ---- |
+| GET    | `/api/products`     | Get semua produk      | ❌   |
+| GET    | `/api/products/:id` | Get produk by ID      | ❌   |
+| POST   | `/api/products`     | Tambah produk baru    | ✅   |
+| PUT    | `/api/products/:id` | Update produk         | ✅   |
+| PATCH  | `/api/products/:id` | Partial Update produk | ✅   |
+| DELETE | `/api/products/:id` | Hapus produk          | ✅   |
+
+> Endpoint dengan Auth ✅ membutuhkan header `Authorization: Bearer <token_jwt>`
 
 ---
 
-## Contoh Request & Response
+## 📄 Contoh Request & Response
 
-### POST /api/products
+### Register User (`POST /api/users/register`)
+
 **Request:**
+
 ```json
 {
-  "name": "product",
-  "price": 10000,
-  "stock": 10
+  "username": "johndoe",
+  "email": "johndoe@example.com",
+  "password": "password123"
 }
 ```
 
 **Response:**
+
 ```json
 {
-  "code": 200,
-  "status": "OK",
   "data": {
     "id": 1,
-    "name": "product",
-    "price": 10000,
-    "stock": 10,
-    "created_at": "2026-06-15T02:27:55+07:00",
-    "updated_at": "2026-06-15T02:27:55+07:00"
+    "username": "johndoe",
+    "created_at": "2026-06-16T10:00:00Z",
+    "updated_at": "2026-06-16T10:00:00Z"
   }
 }
 ```
 
-### PATCH /api/products/:id
-**Request:**
-```json
-{
-  "name": "product baru",
-  "price": 15000
-}
-```
+### Login (`POST /api/users/login`)
 
 **Response:**
+
 ```json
 {
-  "code": 200,
-  "status": "OK",
   "data": {
-    "id": 1,
-    "name": "product baru",
-    "price": 15000,
-    "stock": 10,
-    "created_at": "2026-06-15T02:27:55+07:00",
-    "updated_at": "2026-06-15T02:36:55+07:00"
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
   }
 }
 ```
 
-### GET /api/products/:id — Not Found
+### Get All Products (`GET /api/products?page=2&size=10`)
+
 **Response:**
+
 ```json
 {
-    "code": 404,
-    "status": "Product with id = 1 not found"
+  "data": [
+    {
+      "id": 20,
+      "name": "Laptop Gaming",
+      "price": 15000000,
+      "stock": 10,
+      "created_at": "2026-06-16T10:00:00Z",
+      "updated_at": "2026-06-16T10:00:00Z"
+    }
+  ],
+  "paging": {
+    "page": 2,
+    "total_pages": 2,
+    "total_items": 20
+  }
 }
 ```
 
-### POST /api/products - Validation Failed
-**Response:**
+### Validation Error Response
+
+**Response (Status 400):**
+
 ```json
 {
-    "code": 400,
-    "status": "Bad Request",
-    "errors": {
-        "Name": "required",
-        "Price": "required",
-        "Stock": "required"
-    }
+  "errors": {
+    "email": "must be a valid email",
+    "password": "must be at least 8 characters long"
+  }
 }
 ```
 
-### PATCH /api/products/:id - Validation Failed
-**Response:**
+### Unauthorized Response
+
+**Response (Status 401):**
+
 ```json
 {
-    "code": 400,
-    "status": "Bad Request",
-    "errors": {
-        "Name": "min"
-    }
+  "errors": "Unauthorized"
 }
 ```
+
 ---
 
-## Project Structure
+## 📂 Project Structure
 
-```
+```text
 toko-api-fiber/
-├── cmd/web/          # Entry point
-├── db/migrations/    # SQL migration files
+├── cmd/web/          # Entry point aplikasi & Wire injector
+├── db/migration/     # File migrasi SQL
 ├── internal/
-│   ├── config/       # Application config
-│   ├── entity/       # GORM models
-│   ├── model/        # Request & Response structs
-│   ├── repository/   # Database layer
-│   ├── usecase/      # Business logic
-│   ├── delivery/http/# Controllers, Middleware & routing
-│   └── util/         # Utilities
-└── config.env.example
+│   ├── config/       # Konfigurasi aplikasi (Database, Fiber, Viper, dsb)
+│   ├── delivery/     # Layer HTTP (Controllers, Middleware, Routing)
+│   ├── entity/       # Struktur representasi tabel database (GORM)
+│   ├── exception/    # Custom error handling & custom validation
+│   ├── model/        # Struktur DTO (Request/Response)
+│   ├── repository/   # Operasi database
+│   ├── usecase/      # Business logic / Service layer
+│   └── util/         # Utility functions (contoh: JWT parser)
+├── config.env.example# Template environment variables
+└── README.md
 ```
